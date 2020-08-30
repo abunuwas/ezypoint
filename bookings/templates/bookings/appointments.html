@@ -1,0 +1,153 @@
+<html>
+<head>
+<title>Barbers</title>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+<meta http-equiv='x-ua-compatible' content='ie=edge'>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+{#<script src="https://unpkg.com/vuex"></script>#}
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js" integrity="sha512-rmZcZsyhe0/MAjquhTgiUcb4d9knaFc7b5xAfju483gbEXTkeJRUMIPk6s3ySZMYUHEcjKbjLjyddGWMrNEvZg==" crossorigin="anonymous"></script>
+</head>
+<body>
+  <h1>Barbers</h1>
+  <div id="app">
+    <transition v-if="stage == 'service'">
+      <div  id="service">
+          <table class="table">
+            <tr v-for="service in services" :key="service.service"
+                @click="service.selected = !service.selected"
+                :class="{ selected : service.selected }">
+              <td>{ service.service }</td>
+              <td>{ service.time }m</td>
+            </tr>
+          </table>
+          <button type="button" class="btn btn-primary" @click="toDateStage">Continue</button>
+      </div>
+    </transition>
+    <transition v-if="stage == 'date'">
+      <div id="date">
+        <v-date-picker
+          v-model="selectedDate"
+          mode="single"
+          is-inline>
+        </v-date-picker>
+        <button type="button" class="btn btn-primary" @click="toStaffStage">Continue</button>
+      </div>
+    </transition>
+    <transition v-if="stage == 'staff'">
+      <div id="staff">
+        <table class="table">
+          <tr v-for="person in staff" :key="person.name"
+              @click="person.selected = !person.selected"
+              :class="{ selected : person.selected }"
+          >
+            <td>{ person.name }</td>
+            <td>{ person.available ? 'available' : 'unavailable' }</td>
+          </tr>
+        </table>
+        <button type="button" class="btn btn-primary" @click="toTimeStage">Continue</button>
+      </div>
+    </transition>
+    <transition v-if="stage == 'time'">
+      <div id="time">
+        <div class="card" style="width: 18rem;">
+          <ul class="list-group list-group-flush">
+            <li v-for="time in slots" class="list-group-item"
+                @click="time.selected = !time.selected"
+                :class="{ selected : time.selected }">
+                { time.time.format('hh:mm A') }
+            </li>
+          </ul>
+        </div>
+        <button type="button" class="btn btn-primary" @click="toSummaryStage">Continue</button>
+      </div>
+    </transition>
+    <transition v-if="stage == 'summary'">
+      <div id="summary">
+          <table class="table">
+            <tr>
+              <td><b>service</b></td>
+              <td>{ selectedService.service }</td>
+            </tr>
+            <tr>
+              <td><b>duration</b></td>
+              <td>{ selectedService.time }m</td>
+            </tr>
+            <tr>
+              <td><b>barber</b></td>
+              <td>{ selectedBarber.name }</td>
+            </tr>
+            <tr>
+              <td><b>when?</b></td>
+              <td>{ selectedDate.format('dddd, MMMM Do') } at { this.selectedTime.time.format('hh:mm A') }</td>
+            </tr>
+          </table>
+      </div>
+    </transition>
+  </div>
+<!-- Our View App goes at the end of the document -->
+<script src='https://unpkg.com/v-calendar'></script>
+<script>
+const vueApp = new Vue({
+  delimiters: ['{', '}'],
+  el: '#app',
+  data: {
+    selectedBarber: null,
+    selectedDate: null,
+    selectedService: null,
+    selectedTime: null,
+    {%  autoescape off  %}
+    services: {{ services }},
+    stage: 'service',
+    staff: {{ staff }},
+    {%  endautoescape %}
+    slots: []
+  },
+  mounted()  {
+  },
+  methods: {
+      toTimeStage() {
+          this.selectedBarber = this.staff.filter(barber => barber.selected)[0];
+          this.makeSlots();
+          this.stage = 'time'
+      },
+      toDateStage(){
+          this.selectedService = this.services.filter(service => service.selected)[0];
+          this.stage = 'date';
+      },
+      toSummaryStage(){
+          this.selectedTime = this.slots.filter(time => time.selected)[0];
+          this.stage = 'summary';
+      },
+      toStaffStage(){
+          this.selectedDate = moment(this.selectedDate);
+          this.stage = 'staff';
+      },
+      makeSlots() {
+          let beginning = moment({year: 2020, month: 8, day: 8, hour: 9, minute: 0});
+          const end = moment({year: 2020, month: 8, day: 8, hour: 12, minute: 0});
+          this.slots.push({time: moment(beginning), selected: false});
+          while (beginning < end) {
+            beginning.add(this.selectedService.time, 'minutes');
+            this.slots.push({time: moment(beginning), selected: false});
+          }
+          return this.slots;
+      }
+  }
+})
+</script>
+</body>
+<style>
+.selected {
+  background-color: red;
+}
+
+.selected:hover {
+    background-color: purple;
+}
+</style>
+</html>
