@@ -1,11 +1,12 @@
-import datetime
 import json
 
+from basicauth.decorators import basic_auth_required
 from django.shortcuts import render
 
 # Create your views here.
 
 
+@basic_auth_required
 def index(request):
     services = [
        {
