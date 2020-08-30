@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 SECRET_KEY = '3c+i*h^bvdybl!_5^_8*qj81dhhpou36#r9d&#y9ud6gs9=&ad'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ezypoint.herokuapp.com']
 
 
 # Application definition
